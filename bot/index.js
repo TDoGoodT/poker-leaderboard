@@ -2,7 +2,7 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 import { parseMessage } from './parser.js';
-import { addGame, resetData } from './store.js';
+import { addGame } from './store.js';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -48,8 +48,7 @@ async function syncGroupHistory() {
     const messages = await group.fetchMessages({ limit: SYNC_LIMIT });
     console.log(`Fetched ${messages.length} messages. Processing...`);
 
-    // Reset data to avoid duplicates/stale data
-    resetData();
+    // Note: addGame() handles deduplication by checking existing IDs
     let importedCount = 0;
 
     for (const msg of messages) {
