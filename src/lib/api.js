@@ -1,6 +1,7 @@
 export async function fetchData() {
     try {
-        const response = await fetch(`${import.meta.env.BASE_URL}data.json`);
+        const url = `${import.meta.env.BASE_URL}data.json?ts=${Date.now()}`;
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
             throw new Error('Failed to fetch data');
         }
