@@ -5,12 +5,14 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 export default function Leaderboard() {
     const [players, setPlayers] = useState([]);
+    const [gameCount, setGameCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchData().then(data => {
-            const { players } = processData(data);
+            const { players, games } = processData(data);
             setPlayers(players);
+            setGameCount(games.length);
             setLoading(false);
         });
     }, []);
@@ -22,7 +24,7 @@ export default function Leaderboard() {
     return (
         <div className="space-y-8">
             <section>
-                <h1 className="text-3xl font-bold mb-6 text-white">Current Standings</h1>
+                <h1 className="text-3xl font-bold mb-6 text-white">Current Standings - Gameweek {gameCount}</h1>
                 <LeaderboardTable players={players} />
             </section>
 
