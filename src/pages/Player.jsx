@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchData, processData } from '../lib/api';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Calendar } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, Calendar, Target, Percent, Flame, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function Player() {
@@ -15,16 +15,10 @@ export default function Player() {
         fetchData().then(data => {
             const { players } = processData(data);
             const player = players.find(p => p.name === decodedName);
-            setPlayers(player);
+            setStats(player);
             setLoading(false);
         });
     }, [decodedName]);
-
-    // Correction: setPlayers should be named setPlayerStats or simply use stats
-    // Re-writing the useEffect slightly to match state
-    function setPlayers(player) {
-        setStats(player);
-    }
 
     if (loading) return <div className="p-8 text-center text-slate-400">Loading profile...</div>;
 
@@ -35,23 +29,19 @@ export default function Player() {
         </div>
     );
 
-    const bestWin = Math.max(...stats.history.map(h => h.net));
-    const worstLoss = Math.min(...stats.history.map(h => h.net));
-
     // Prepare chart data: Cumulative net over time
-    // history array has { date, net, total }
-    // We want to format date for XAxis
     const chartData = stats.history.map((h, i) => ({
         ...h,
         dateFormatted: format(new Date(h.date), 'MMM d'),
         gameIndex: i + 1
     }));
 
-    // Add start point
-    if (chartData.length > 0) {
-        // Optional: Add a zero point at start if needed? 
-        // Or just let it start from first game.
-    }
+    const streakLabel = stats.streak.count > 0
+        ? `${stats.streak.count} ${stats.streak.type === 'win' ? 'Win' : 'Loss'} Streak`
+        : '—';
+    const streakColor = stats.streak.type === 'win' ? 'text-green-400' : stats.streak.type === 'loss' ? 'text-red-400' : 'text-slate-400';
+
+    const recentGames = [...stats.history].reverse().slice(0, 10);
 
     return (
         <div className="space-y-8">
@@ -69,10 +59,26 @@ export default function Player() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Primary stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard icon={<Activity className="text-blue-400" />} label="Games Played" value={stats.gamesPlayed} />
-                <StatCard icon={<TrendingUp className="text-green-400" />} label="Best Win" value={bestWin > -Infinity ? `+${bestWin}` : '-'} subValue="Best Session" />
-                <StatCard icon={<TrendingDown className="text-red-400" />} label="Worst Loss" value={worstLoss < Infinity ? worstLoss : '-'} subValue="Worst Session" />
+                <StatCard icon={<Percent className="text-purple-400" />} label="Win Rate" value={`${stats.winRate.toFixed(1)}%`} />
+                <StatCard icon={<Target className="text-yellow-400" />} label="Avg per Game" value={`${stats.avgNet >= 0 ? '+' : ''}${stats.avgNet.toFixed(1)}`} />
+                <StatCard icon={<Flame className={streakColor} />} label="Current Streak" value={streakLabel} valueClassName={streakColor} />
+            </div>
+
+            {/* Wins / Losses session counts */}
+            <div className="grid grid-cols-2 gap-4">
+                <StatCard icon={<TrendingUp className="text-green-400" />} label="Winning Sessions" value={stats.wins} subValue="Games with profit" valueClassName="text-green-400" />
+                <StatCard icon={<TrendingDown className="text-red-400" />} label="Losing Sessions" value={stats.losses} subValue="Games with a loss" valueClassName="text-red-400" />
+            </div>
+
+            {/* Secondary stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard icon={<TrendingUp className="text-green-400" />} label="Best Win" value={stats.biggestWin !== null ? `+${stats.biggestWin}` : '—'} subValue="Single session" />
+                <StatCard icon={<TrendingDown className="text-red-400" />} label="Worst Loss" value={stats.biggestLoss !== null ? `${stats.biggestLoss}` : '—'} subValue="Single session" />
+                <StatCard icon={<DollarSign className="text-green-400" />} label="Total Won" value={`${stats.totalWinnings > 0 ? '+' : ''}${stats.totalWinnings}`} subValue="Across all sessions" />
+                <StatCard icon={<DollarSign className="text-red-400" />} label="Total Lost" value={`-${stats.totalLosses}`} subValue="Across all sessions" />
             </div>
 
             <section className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
@@ -101,21 +107,53 @@ export default function Player() {
                     </ResponsiveContainer>
                 </div>
             </section>
+
+            {recentGames.length > 0 && (
+                <section className="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
+                    <h3 className="text-lg font-semibold text-slate-300 p-6 pb-4 flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-slate-400" />
+                        Recent Sessions
+                    </h3>
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-slate-700 text-slate-400 text-left">
+                                <th className="px-6 py-3 font-medium">Date</th>
+                                <th className="px-6 py-3 font-medium text-right">Result</th>
+                                <th className="px-6 py-3 font-medium text-right">Cumulative</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentGames.map((game, i) => (
+                                <tr key={i} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                                    <td className="px-6 py-3 text-slate-300">{format(new Date(game.date), 'MMM d, yyyy')}</td>
+                                    <td className={`px-6 py-3 text-right font-mono font-semibold ${game.net > 0 ? 'text-green-400' : game.net < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                                        {game.net > 0 ? '+' : ''}{game.net}
+                                    </td>
+                                    <td className={`px-6 py-3 text-right font-mono ${game.total >= 0 ? 'text-slate-300' : 'text-slate-400'}`}>
+                                        {game.total > 0 ? '+' : ''}{game.total}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            )}
         </div>
     );
 }
 
-function StatCard({ icon, label, value, subValue }) {
+function StatCard({ icon, label, value, subValue, valueClassName }) {
     return (
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 flex items-start gap-4">
-            <div className="p-3 bg-slate-700/50 rounded-lg">
+        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 flex items-start gap-4">
+            <div className="p-2.5 bg-slate-700/50 rounded-lg shrink-0">
                 {icon}
             </div>
-            <div>
-                <div className="text-slate-400 text-sm font-medium">{label}</div>
-                <div className="text-2xl font-bold text-white mt-1">{value}</div>
-                {subValue && <div className="text-xs text-slate-500 mt-1">{subValue}</div>}
+            <div className="min-w-0">
+                <div className="text-slate-400 text-xs font-medium uppercase tracking-wide">{label}</div>
+                <div className={`text-xl font-bold mt-1 truncate ${valueClassName || 'text-white'}`}>{value}</div>
+                {subValue && <div className="text-xs text-slate-500 mt-0.5">{subValue}</div>}
             </div>
         </div>
     );
 }
+
