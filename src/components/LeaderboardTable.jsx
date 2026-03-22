@@ -16,7 +16,7 @@ export default function LeaderboardTable({ players }) {
                     <Link
                         key={player.name}
                         to={`/player/${encodeURIComponent(player.name)}`}
-                        className="group flex items-center gap-3 rounded-[24px] border border-white/6 bg-white/[0.03] px-4 py-4 transition-all duration-200 hover:border-emerald-400/20 hover:bg-white/[0.06]"
+                        className="group flex items-center gap-3 rounded-[24px] border border-white/6 bg-white/[0.03] px-4 py-4 transition-all duration-150 hover:border-emerald-400/20 hover:bg-white/[0.06] active:scale-[0.98] active:opacity-80"
                     >
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/60 text-sm font-bold text-white">
                             {player.rank}
@@ -39,7 +39,7 @@ export default function LeaderboardTable({ players }) {
                             <div className="text-xs text-slate-500">Avg {formatSignedAmount(player.averageNet)}</div>
                         </div>
 
-                        <ChevronRight className="h-4 w-4 text-slate-600 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-slate-300" />
+                        <ChevronRight className="h-4 w-4 text-slate-600 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-slate-300" aria-hidden="true" />
                     </Link>
                 ))}
             </div>

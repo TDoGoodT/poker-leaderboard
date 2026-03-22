@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ArrowLeft, BadgePercent, ChartNoAxesCombined, Trophy } from 'lucide-react';
 import PlayerAvatar from '../components/PlayerAvatar';
+import { PlayerProfileSkeleton } from '../components/SkeletonLoader';
 import useAppData from '../hooks/useAppData';
 import { formatSessionDate, formatSignedAmount } from '../lib/format';
 
@@ -11,7 +12,7 @@ export default function Player() {
     const { playerMap, loading } = useAppData();
     const stats = playerMap[decodedName] || null;
 
-    if (loading) return <div className="glass-panel flex min-h-[50vh] w-full items-center justify-center text-slate-400">Loading profile...</div>;
+    if (loading) return <PlayerProfileSkeleton />;
 
     if (!stats) return (
         <div className="glass-panel flex w-full flex-col items-center justify-center gap-4 py-16 text-center">
@@ -28,8 +29,8 @@ export default function Player() {
 
     return (
         <div className="flex w-full flex-col gap-4 pb-28 sm:gap-6">
-            <Link to="/players" className="inline-flex items-center text-sm font-semibold text-slate-400 transition-colors hover:text-white">
-                <ArrowLeft className="mr-2 h-4 w-4" />
+            <Link to="/players" className="inline-flex min-h-[44px] items-center text-sm font-semibold text-slate-400 transition-all duration-150 hover:text-white active:scale-95 active:opacity-70">
+                <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                 Back to Leaderboard
             </Link>
 
@@ -37,33 +38,14 @@ export default function Player() {
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div className="flex items-start gap-4">
                         <PlayerAvatar name={stats.name} size="lg" />
-                        <div>
-                            <div className="section-kicker">Player Analytics</div>
                             <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">{stats.name}</h1>
-                            <div className={`mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl ${stats.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                                {formatSignedAmount(stats.net)}
+
                             </div>
-                            <p className="mt-2 text-sm text-slate-400">Overall rank #{stats.rank} across the current dataset.</p>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-3">
-                        <AnalyticsChip label="Win rate" value={`${Math.round(stats.winRate)}%`} />
-                        <AnalyticsChip label="Games played" value={stats.gamesPlayed} />
-                        <AnalyticsChip label="Avg session" value={formatSignedAmount(stats.averageNet)} />
-                    </div>
-                </div>
-            </section>
-
-            <div className="grid gap-4 md:grid-cols-3">
-                <StatCard icon={<BadgePercent className="h-5 w-5 text-emerald-300" />} label="Win Rate" value={`${Math.round(stats.winRate)}%`} subValue={`${stats.wins} winning sessions`} />
-                <StatCard icon={<Trophy className="h-5 w-5 text-amber-200" />} label="Biggest Win" value={formatSignedAmount(stats.bestWin)} subValue="Best single session" />
-                <StatCard icon={<ChartNoAxesCombined className="h-5 w-5 text-cyan-300" />} label="Avg. Session Score" value={formatSignedAmount(stats.averageNet)} subValue="Average net per game" />
-            </div>
-
+                                </div>
+                                    </section>
             <section className="glass-panel p-5 sm:p-6">
                 <h3 className="text-lg font-semibold text-slate-300 mb-6 flex items-center gap-2">
-                    <ChartNoAxesCombined className="h-5 w-5 text-slate-400" />
+                    <ChartNoAxesCombined className="h-5 w-5 text-slate-400" aria-hidden="true" />
                     Performance History
                 </h3>
                 <div className="h-64 w-full sm:h-80">
@@ -81,6 +63,33 @@ export default function Player() {
                     </ResponsiveContainer>
                 </div>
             </section>
+
+            <section className="hero-panel p-6 sm:p-8">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex items-start gap-4">
+                        <div>
+                            <div className="section-kicker">Player Analytics</div>
+                            <div className={`mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl ${stats.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                {formatSignedAmount(stats.net)}
+                            </div>
+                            <p className="mt-2 text-sm text-slate-400">Overall rank #{stats.rank} across the current dataset.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                        <AnalyticsChip label="Win rate" value={`${Math.round(stats.winRate)}%`} />
+                        <AnalyticsChip label="Games played" value={stats.gamesPlayed} />
+                        <AnalyticsChip label="Avg session" value={formatSignedAmount(stats.averageNet)} />
+                    </div>
+                </div>
+            </section>
+
+            <div className="grid gap-4 md:grid-cols-3">
+                <StatCard icon={<BadgePercent className="h-5 w-5 text-emerald-300" aria-hidden="true" />} label="Win Rate" value={`${Math.round(stats.winRate)}%`} subValue={`${stats.wins} winning sessions`} />
+                <StatCard icon={<Trophy className="h-5 w-5 text-amber-200" aria-hidden="true" />} label="Biggest Win" value={formatSignedAmount(stats.bestWin)} subValue="Best single session" />
+                <StatCard icon={<ChartNoAxesCombined className="h-5 w-5 text-cyan-300" aria-hidden="true" />} label="Avg. Session Score" value={formatSignedAmount(stats.averageNet)} subValue="Average net per game" />
+            </div>
+
 
             <section className="glass-panel p-5 sm:p-6">
                 <div className="section-kicker">Recent Games</div>

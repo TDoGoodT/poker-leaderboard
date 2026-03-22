@@ -2,6 +2,7 @@ import { useDeferredValue, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Trophy } from 'lucide-react';
 import PlayerAvatar from '../components/PlayerAvatar';
+import { PlayersSkeleton } from '../components/SkeletonLoader';
 import useAppData from '../hooks/useAppData';
 import { formatSignedAmount } from '../lib/format';
 
@@ -19,7 +20,7 @@ export default function Players() {
     });
 
     if (loading) {
-        return <div className="glass-panel flex min-h-[50vh] w-full items-center justify-center text-slate-400">Loading players...</div>;
+        return <PlayersSkeleton />;
     }
 
     return (
@@ -28,7 +29,7 @@ export default function Players() {
                 <div className="section-kicker">Players</div>
                 <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-white">Find any player and open their analytics.</h1>
                 <div className="mt-5 flex items-center gap-3 rounded-[24px] border border-white/10 bg-slate-950/60 px-4 py-3">
-                    <Search className="h-4 w-4 text-slate-500" />
+                    <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
                     <input
                         className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                         value={query}
@@ -40,7 +41,7 @@ export default function Players() {
 
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {filteredPlayers.map((player) => (
-                    <Link key={player.name} to={`/player/${encodeURIComponent(player.name)}`} className="glass-panel group flex items-center gap-4 p-5 transition-colors duration-200 hover:border-emerald-400/18">
+                    <Link key={player.name} to={`/player/${encodeURIComponent(player.name)}`} className="glass-panel group flex items-center gap-4 p-5 transition-all duration-150 hover:border-emerald-400/18 active:scale-[0.98] active:opacity-80">
                         <PlayerAvatar name={player.name} />
                         <div className="min-w-0 flex-1">
                             <div className="truncate text-lg font-bold text-white">{player.name}</div>
@@ -52,8 +53,8 @@ export default function Players() {
                         </div>
                         <div className="text-right">
                             <div className={`text-xl font-extrabold ${player.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{formatSignedAmount(player.net)}</div>
-                            <div className="mt-1 inline-flex items-center gap-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-                                <Trophy className="h-3.5 w-3.5" /> Rank {player.rank}
+                            <div className="mt-1 inline-flex items-center gap-1 text-xs uppercase tracking-widest text-slate-500">
+                                <Trophy className="h-3.5 w-3.5" aria-hidden="true" /> Rank {player.rank}
                             </div>
                         </div>
                     </Link>
