@@ -6,7 +6,6 @@ import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
 import { HistorySkeleton } from '../components/SkeletonLoader';
 import useAppData from '../hooks/useAppData';
-import { deleteLocalSession } from '../lib/api';
 import { formatSessionDate, formatSessionDateTime, formatSignedAmount } from '../lib/format';
 
 export default function History() {
@@ -35,7 +34,6 @@ export default function History() {
                         return (
                             <SwipeableItem
                                 key={game.id}
-                                onDelete={game.isLocal ? () => deleteLocalSession(game.id) : undefined}
                                 deleteLabel="Delete"
                             >
                                 <article className="glass-panel overflow-hidden p-4 sm:p-6">

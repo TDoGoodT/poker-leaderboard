@@ -104,20 +104,6 @@ export function PlayerProfileSkeleton() {
     );
 }
 
-export function NewSessionSkeleton() {
-    return (
-        <SkeletonShell label="Loading session form…">
-            <div className="flex w-full flex-col gap-6 pb-28">
-                <Bone className="h-44 w-full" />
-                <div className="grid gap-6 xl:grid-cols-2">
-                    <Bone className="h-64 w-full" />
-                    <Bone className="h-64 w-full" />
-                </div>
-            </div>
-        </SkeletonShell>
-    );
-}
-
 export function SettingsSkeleton() {
     return (
         <SkeletonShell label="Loading settings…">

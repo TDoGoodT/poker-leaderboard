@@ -1,6 +1,6 @@
 # Poker Leaderboard
 
-A poker session tracker and leaderboard dashboard. Game history is imported automatically from a WhatsApp group via a bot, or entered manually in-app. Stats are computed client-side and displayed across several views.
+A poker session tracker and leaderboard dashboard. Game history is imported automatically from a WhatsApp group via a bot. Stats are computed client-side and displayed across several views.
 
 ## Features
 
@@ -8,13 +8,12 @@ A poker session tracker and leaderboard dashboard. Game history is imported auto
 - **History** — per-session cards showing results, transactions, and raw source messages
 - **Players** — searchable player list with rank, net, and win-rate badges
 - **Player profile** — per-player KPIs, cumulative profit/loss chart, and recent games
-- **New session** — manual entry form with balance validation, saved to browser localStorage
-- **Settings** — clear locally-saved sessions
+- **Settings** — app behavior and data-source overview
 
 ## Data flow
 
 1. The bot (`bot/`) connects to WhatsApp Web, fetches messages from a configured group, parses game results (including Hebrew message variants), and writes structured data to `public/data.json`, then auto-commits and pushes.
-2. The frontend (`src/lib/api.js`) fetches `data.json` at runtime and merges it with any locally-saved sessions stored in `localStorage` under `pokerpal.local-sessions.v1`.
+2. The frontend (`src/lib/api.js`) fetches `data.json` at runtime.
 3. `processData()` in `src/lib/api.js` derives all aggregates (rankings, win rates, biggest swings, recent form). Pages consume this via the `useAppData` hook.
 
 ## Development
