@@ -2,7 +2,6 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
     Activity,
     History,
-    Plus,
     Settings,
     Trophy,
     Users,
@@ -41,16 +40,6 @@ export default function Layout({ children }) {
             <main className="mx-auto flex w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-8">
                 {children}
             </main>
-
-            {/* FAB — New Session, positioned above the bottom nav */}
-            <Link
-                to="/new-session"
-                aria-label="New Session"
-                className="fab-button fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 shadow-[0_8px_32px_rgba(52,211,153,0.45)] transition-all duration-150 active:scale-90 active:opacity-75 hover:shadow-[0_8px_40px_rgba(52,211,153,0.6)] sm:right-6"
-                style={{ bottom: 'calc(5.75rem + env(safe-area-inset-bottom))' }}
-            >
-                <Plus className="h-6 w-6" aria-hidden="true" />
-            </Link>
 
             {/* Bottom Navigation — glassmorphism, thumb-zone ergonomics */}
             <nav

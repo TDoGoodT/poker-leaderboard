@@ -1,52 +1,3 @@
-const STORAGE_KEY = 'pokerpal.local-sessions.v1';
-
-function readLocalSessions() {
-    if (typeof window === 'undefined') {
-        return [];
-    }
-
-    try {
-        const rawValue = window.localStorage.getItem(STORAGE_KEY);
-        return rawValue ? JSON.parse(rawValue) : [];
-    } catch (error) {
-        console.error('Error reading local sessions:', error);
-        return [];
-    }
-}
-
-function writeLocalSessions(games) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
-    window.dispatchEvent(new CustomEvent('pokerpal:data-updated'));
-}
-
-function mergeData(baseData, localGames) {
-    const uniqueGames = new Map();
-
-    (baseData.games || []).forEach((game) => {
-        uniqueGames.set(game.id, { ...game, isLocal: false });
-    });
-
-    localGames.forEach((game) => {
-        uniqueGames.set(game.id, { ...game, isLocal: true });
-    });
-
-    const allGames = Array.from(uniqueGames.values());
-    const playerSet = new Set(baseData.players || []);
-
-    allGames.forEach((game) => {
-        Object.keys(game.results || {}).forEach((player) => playerSet.add(player));
-    });
-
-    return {
-        games: allGames,
-        players: Array.from(playerSet),
-    };
-}
-
 function enrichGame(game) {
     const entries = Object.entries(game.results || {})
         .map(([player, net]) => ({ player, net: Number(net || 0) }))
@@ -80,11 +31,10 @@ export async function fetchData() {
             throw new Error('Failed to fetch data');
         }
 
-        const baseData = await response.json();
-        return mergeData(baseData, readLocalSessions());
+        return await response.json();
     } catch (error) {
         console.error('Error fetching data:', error);
-        return mergeData({ games: [], players: [] }, readLocalSessions());
+        return { games: [], players: [] };
     }
 }
 
@@ -215,59 +165,4 @@ export function processData(data) {
         playerMap,
         summary,
     };
-}
-
-export function saveSession({ date, participants, notes }) {
-    const cleanedParticipants = participants
-        .map((participant) => ({
-            name: participant.name.trim(),
-            buyIn: Number(participant.buyIn || 0),
-            cashOut: Number(participant.cashOut || 0),
-        }))
-        .filter((participant) => participant.name);
-
-    const results = cleanedParticipants.reduce((accumulator, participant) => {
-        accumulator[participant.name] = participant.cashOut - participant.buyIn;
-        return accumulator;
-    }, {});
-
-    const transactions = cleanedParticipants.map((participant) => ({
-        player: participant.name,
-        buyIn: participant.buyIn,
-        cashOut: participant.cashOut,
-        net: participant.cashOut - participant.buyIn,
-    }));
-
-    const rawMessage = notes?.trim()
-        ? notes.trim()
-        : transactions
-              .map((transaction) => `${transaction.player}: buy-in ${transaction.buyIn}, cash-out ${transaction.cashOut}, net ${transaction.net}`)
-              .join('\n');
-
-    const game = {
-        id: `LOCAL_${Date.now()}`,
-        date: new Date(date).toISOString(),
-        rawMessage,
-        results,
-        transactions,
-        sender: 'manual@local',
-        notes: notes?.trim() || '',
-    };
-
-    const sessions = readLocalSessions();
-    writeLocalSessions([game, ...sessions]);
-    return game;
-}
-
-export function clearLocalSessions() {
-    writeLocalSessions([]);
-}
-
-/**
- * Delete a single locally-saved session by id.
- * Dispatches pokerpal:data-updated so useAppData reloads automatically.
- */
-export function deleteLocalSession(id) {
-    const sessions = readLocalSessions();
-    writeLocalSessions(sessions.filter((session) => session.id !== id));
 }

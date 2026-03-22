@@ -7,7 +7,6 @@ import {
     HistorySkeleton,
     PlayersSkeleton,
     PlayerProfileSkeleton,
-    NewSessionSkeleton,
     SettingsSkeleton,
 } from './components/SkeletonLoader';
 
@@ -15,7 +14,6 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Player = lazy(() => import('./pages/Player'));
 const History = lazy(() => import('./pages/History'));
 const Players = lazy(() => import('./pages/Players'));
-const NewSession = lazy(() => import('./pages/NewSession'));
 const Settings = lazy(() => import('./pages/Settings'));
 
 const pageVariants = {
@@ -84,14 +82,6 @@ function AnimatedRoutes() {
                             element={
                                 <Suspense fallback={<HistorySkeleton />}>
                                     <History />
-                                </Suspense>
-                            }
-                        />
-                        <Route
-                            path="/new-session"
-                            element={
-                                <Suspense fallback={<NewSessionSkeleton />}>
-                                    <NewSession />
                                 </Suspense>
                             }
                         />

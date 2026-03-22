@@ -29,13 +29,6 @@ export default function useAppData() {
 
     useEffect(() => {
         reload();
-
-        function handleDataUpdate() {
-            reload();
-        }
-
-        window.addEventListener('pokerpal:data-updated', handleDataUpdate);
-        return () => window.removeEventListener('pokerpal:data-updated', handleDataUpdate);
     }, []);
 
     return {
