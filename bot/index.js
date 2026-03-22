@@ -2,7 +2,7 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 import { parseMessage } from './parser.js';
-import { addGame } from './store.js';
+import { addGame, readData } from './store.js';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -42,16 +42,32 @@ async function syncGroupHistory() {
         return;
     }
 
-    console.log(`Found group: ${group.name}. Fetching last ${SYNC_LIMIT} messages...`);
+    const existingData = readData();
+    const lastRecordedDateMs = getLastRecordedGameDateMs(existingData.games);
+
+    if (lastRecordedDateMs) {
+        console.log(`Found group: ${group.name}. Searching for games after ${new Date(lastRecordedDateMs).toISOString()}...`);
+    } else {
+        console.log(`Found group: ${group.name}. No previous games found, fetching last ${SYNC_LIMIT} messages...`);
+    }
 
     // Fetch messages
     const messages = await group.fetchMessages({ limit: SYNC_LIMIT });
-    console.log(`Fetched ${messages.length} messages. Processing...`);
+    let candidateMessages = messages;
+
+    if (lastRecordedDateMs) {
+        candidateMessages = messages.filter((msg) => (msg.timestamp * 1000) > lastRecordedDateMs);
+    }
+
+    // Process oldest -> newest for deterministic imports
+    candidateMessages.sort((a, b) => a.timestamp - b.timestamp);
+
+    console.log(`Fetched ${messages.length} messages. Processing ${candidateMessages.length} new candidate messages...`);
 
     // Note: addGame() handles deduplication by checking existing IDs
     let importedCount = 0;
 
-    for (const msg of messages) {
+    for (const msg of candidateMessages) {
         if (!msg.body) continue;
 
         try {
@@ -77,6 +93,20 @@ async function syncGroupHistory() {
 
     console.log(`History sync complete. Imported ${importedCount} games.`);
     pushChanges();
+}
+
+function getLastRecordedGameDateMs(games = []) {
+    if (!Array.isArray(games) || games.length === 0) return null;
+
+    let latest = null;
+    for (const game of games) {
+        if (!game?.date) continue;
+        const time = new Date(game.date).getTime();
+        if (Number.isNaN(time)) continue;
+        if (latest === null || time > latest) latest = time;
+    }
+
+    return latest;
 }
 
 client.on('message', async (message) => {
