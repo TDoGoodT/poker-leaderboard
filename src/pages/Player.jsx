@@ -21,11 +21,22 @@ export default function Player() {
         </div>
     );
 
-    const chartData = stats.history.map((item, index) => ({
-        ...item,
-        label: formatSessionDate(item.date),
-        sequence: index + 1,
-    }));
+    
+    const chartData = [
+        {
+            date: null,
+            net: 0,
+            total: 0,
+            gameId: 'start',
+            label: 'Start',
+            sequence: 0,
+        },
+        ...stats.history.map((item, index) => ({
+            ...item,
+            label: formatSessionDate(item.date),
+            sequence: index + 1,
+        })),
+    ];
 
     return (
         <div className="flex w-full flex-col gap-4 pb-28 sm:gap-6">
@@ -38,11 +49,11 @@ export default function Player() {
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div className="flex items-start gap-4">
                         <PlayerAvatar name={stats.name} size="lg" />
-                            <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">{stats.name}</h1>
+                        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">{stats.name}</h1>
 
-                            </div>
-                                </div>
-                                    </section>
+                    </div>
+                </div>
+            </section>
             <section className="glass-panel p-5 sm:p-6">
                 <h3 className="text-lg font-semibold text-slate-300 mb-6 flex items-center gap-2">
                     <ChartNoAxesCombined className="h-5 w-5 text-slate-400" aria-hidden="true" />
