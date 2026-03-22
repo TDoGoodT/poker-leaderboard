@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useLayoutEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './components/Layout';
@@ -26,72 +26,87 @@ const pageVariants = {
 
 const pageTransition = { duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] };
 
+function ScrollToTop() {
+    const { pathname } = useLocation();
+
+    useLayoutEffect(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, [pathname]);
+
+    return null;
+}
+
 function AnimatedRoutes() {
     const location = useLocation();
 
     return (
-        <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-                key={location.pathname}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={pageTransition}
-                className="w-full"
-            >
-                <Routes location={location}>
-                    <Route
-                        path="/"
-                        element={
-                            <Suspense fallback={<LeaderboardSkeleton />}>
-                                <Leaderboard />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="/players"
-                        element={
-                            <Suspense fallback={<PlayersSkeleton />}>
-                                <Players />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="/player/:name"
-                        element={
-                            <Suspense fallback={<PlayerProfileSkeleton />}>
-                                <Player />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="/history"
-                        element={
-                            <Suspense fallback={<HistorySkeleton />}>
-                                <History />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="/new-session"
-                        element={
-                            <Suspense fallback={<NewSessionSkeleton />}>
-                                <NewSession />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="/settings"
-                        element={
-                            <Suspense fallback={<SettingsSkeleton />}>
-                                <Settings />
-                            </Suspense>
-                        }
-                    />
-                </Routes>
-            </motion.div>
-        </AnimatePresence>
+        <>
+            <ScrollToTop />
+            <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                    key={location.pathname}
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={pageTransition}
+                    className="w-full"
+                >
+                    <Routes location={location}>
+                        <Route
+                            path="/"
+                            element={
+                                <Suspense fallback={<LeaderboardSkeleton />}>
+                                    <Leaderboard />
+                                </Suspense>
+                            }
+                        />
+                        <Route
+                            path="/players"
+                            element={
+                                <Suspense fallback={<PlayersSkeleton />}>
+                                    <Players />
+                                </Suspense>
+                            }
+                        />
+                        <Route
+                            path="/player/:name"
+                            element={
+                                <Suspense fallback={<PlayerProfileSkeleton />}>
+                                    <Player />
+                                </Suspense>
+                            }
+                        />
+                        <Route
+                            path="/history"
+                            element={
+                                <Suspense fallback={<HistorySkeleton />}>
+                                    <History />
+                                </Suspense>
+                            }
+                        />
+                        <Route
+                            path="/new-session"
+                            element={
+                                <Suspense fallback={<NewSessionSkeleton />}>
+                                    <NewSession />
+                                </Suspense>
+                            }
+                        />
+                        <Route
+                            path="/settings"
+                            element={
+                                <Suspense fallback={<SettingsSkeleton />}>
+                                    <Settings />
+                                </Suspense>
+                            }
+                        />
+                    </Routes>
+                </motion.div>
+            </AnimatePresence>
+        </>
     );
 }
 
