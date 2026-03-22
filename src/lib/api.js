@@ -26,8 +26,12 @@ function writeLocalSessions(games) {
 function mergeData(baseData, localGames) {
     const uniqueGames = new Map();
 
-    [...(baseData.games || []), ...localGames].forEach((game) => {
-        uniqueGames.set(game.id, game);
+    (baseData.games || []).forEach((game) => {
+        uniqueGames.set(game.id, { ...game, isLocal: false });
+    });
+
+    localGames.forEach((game) => {
+        uniqueGames.set(game.id, { ...game, isLocal: true });
     });
 
     const allGames = Array.from(uniqueGames.values());
@@ -257,4 +261,13 @@ export function saveSession({ date, participants, notes }) {
 
 export function clearLocalSessions() {
     writeLocalSessions([]);
+}
+
+/**
+ * Delete a single locally-saved session by id.
+ * Dispatches pokerpal:data-updated so useAppData reloads automatically.
+ */
+export function deleteLocalSession(id) {
+    const sessions = readLocalSessions();
+    writeLocalSessions(sessions.filter((session) => session.id !== id));
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CalendarDays, Plus, Search, Trash2 } from 'lucide-react';
 import useAppData from '../hooks/useAppData';
 import { saveSession } from '../lib/api';
+import { NewSessionSkeleton } from '../components/SkeletonLoader';
 import { formatSignedAmount } from '../lib/format';
 
 function createParticipant(name) {
@@ -83,6 +84,12 @@ export default function NewSession() {
         }
 
         setError('');
+
+        // Haptic confirmation on supported devices
+        if (navigator.vibrate) {
+            navigator.vibrate([50]);
+        }
+
         saveSession({
             date: sessionDate,
             participants,
@@ -95,7 +102,7 @@ export default function NewSession() {
     }
 
     if (loading) {
-        return <div className="glass-panel flex min-h-[50vh] w-full items-center justify-center text-slate-400">Loading session tools...</div>;
+        return <NewSessionSkeleton />;
     }
 
     return (
@@ -113,14 +120,14 @@ export default function NewSession() {
                     <div className="section-kicker">Setup</div>
 
                     <label className="mt-4 block text-sm font-semibold text-slate-200">
-                        <span className="mb-2 flex items-center gap-2 text-slate-300"><CalendarDays className="h-4 w-4" /> Session date</span>
+                        <span className="mb-2 flex items-center gap-2 text-slate-300"><CalendarDays className="h-4 w-4" aria-hidden="true" /> Session date</span>
                         <input className="app-input" type="date" value={sessionDate} onChange={(event) => setSessionDate(event.target.value)} />
                     </label>
 
                     <div className="mt-6">
                         <label className="text-sm font-semibold text-slate-200">Add players</label>
                         <div className="mt-2 flex items-center gap-3 rounded-[24px] border border-white/10 bg-slate-950/60 px-4 py-3">
-                            <Search className="h-4 w-4 text-slate-500" />
+                            <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
                             <input
                                 className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                                 value={query}
@@ -132,7 +139,7 @@ export default function NewSession() {
                                 className="rounded-full border border-emerald-400/20 bg-emerald-400/10 p-2 text-emerald-300 transition-colors hover:bg-emerald-400/16"
                                 onClick={() => addParticipant(query)}
                             >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-4 w-4" aria-hidden="true" />
                             </button>
                         </div>
 
@@ -211,8 +218,8 @@ export default function NewSession() {
                                         <div className={`mt-1 text-xl font-extrabold ${net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{formatSignedAmount(net)}</div>
                                     </div>
 
-                                    <button type="button" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400 transition-colors hover:bg-rose-400/10 hover:text-rose-200" onClick={() => removeParticipant(participant.id)}>
-                                        <Trash2 className="h-4 w-4" />
+                                    <button type="button" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400 transition-all duration-150 hover:bg-rose-400/10 hover:text-rose-200 active:scale-90 active:opacity-70" onClick={() => removeParticipant(participant.id)} aria-label={`Remove ${participant.name}`}>
+                                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                                     </button>
                                 </div>
                             );
@@ -229,7 +236,7 @@ export default function NewSession() {
                         <SummaryBox label="Net balance" value={formatSignedAmount(totals.balance)} accent={totals.balance === 0} />
                     </div>
 
-                    {error ? <div className="mt-5 rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</div> : null}
+                    {error ? <div role="alert" aria-live="assertive" className="mt-5 rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</div> : null}
 
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
                         <button type="button" className="app-button-secondary" onClick={() => setParticipants([])}>Clear players</button>

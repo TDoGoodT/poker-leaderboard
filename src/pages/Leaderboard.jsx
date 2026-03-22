@@ -3,6 +3,7 @@ import { Crown, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LeaderboardTable from '../components/LeaderboardTable';
 import PlayerAvatar from '../components/PlayerAvatar';
+import { LeaderboardSkeleton } from '../components/SkeletonLoader';
 import useAppData from '../hooks/useAppData';
 import { formatSessionDate, formatSignedAmount } from '../lib/format';
 
@@ -10,7 +11,7 @@ export default function Leaderboard() {
     const { players, summary, loading } = useAppData();
 
     if (loading) {
-        return <div className="glass-panel flex min-h-[50vh] w-full items-center justify-center text-slate-400">Loading leaderboard...</div>;
+        return <LeaderboardSkeleton />;
     }
 
     const topPlayers = players.slice(0, 3);
@@ -45,7 +46,7 @@ export default function Leaderboard() {
                             <h2 className="mt-2 font-display text-2xl font-bold text-white">Podium</h2>
                         </div>
                         <div className="rounded-full border border-amber-300/20 bg-amber-300/10 p-3 text-amber-200">
-                            <Crown className="h-5 w-5" />
+                            <Crown className="h-5 w-5" aria-hidden="true" />
                         </div>
                     </div>
 
@@ -54,7 +55,7 @@ export default function Leaderboard() {
                             <Link
                                 key={player.name}
                                 to={`/player/${encodeURIComponent(player.name)}`}
-                                className={`relative overflow-hidden rounded-[24px] border p-4 sm:p-5 md:rounded-[28px] ${player.rank === 1 ? 'border-amber-300/25 bg-gradient-to-b from-amber-300/14 to-white/[0.04] md:min-h-[260px]' : 'border-white/10 bg-white/[0.04] md:min-h-[220px]'}`}
+                                className={`relative overflow-hidden rounded-[24px] border p-4 sm:p-5 md:rounded-[28px] transition-all duration-150 active:scale-[0.97] active:opacity-80 ${player.rank === 1 ? 'border-amber-300/25 bg-gradient-to-b from-amber-300/14 to-white/[0.04] md:min-h-[260px]' : 'border-white/10 bg-white/[0.04] md:min-h-[220px]'}`}
                             >
                                 <div className="absolute right-4 top-4 rounded-full border border-white/10 bg-slate-950/60 px-3 py-1 text-xs font-semibold tracking-[0.22em] text-slate-300 uppercase">
                                     #{player.rank}
@@ -80,30 +81,30 @@ export default function Leaderboard() {
                             <div className="section-kicker">Quick Stats</div>
                             <h2 className="mt-2 font-display text-2xl font-bold text-white">Table Pulse</h2>
                         </div>
-                        <Sparkles className="h-5 w-5 text-emerald-300" />
+                        <Sparkles className="h-5 w-5 text-emerald-300" aria-hidden="true" />
                     </div>
 
                     <div className="space-y-3">
                         <InsightRow
-                            icon={<TrendingUp className="h-4 w-4 text-emerald-300" />}
+                            icon={<TrendingUp className="h-4 w-4 text-emerald-300" aria-hidden="true" />}
                             label="Leader"
                             playerName={players[0]?.name}
                             value={players[0] ? formatSignedAmount(players[0].net) : 'No data'}
                         />
                         <InsightRow
-                            icon={<TrendingDown className="h-4 w-4 text-rose-300" />}
+                            icon={<TrendingDown className="h-4 w-4 text-rose-300" aria-hidden="true" />}
                             label="Toughest stretch"
                             playerName={players[players.length - 1]?.name}
                             value={players[players.length - 1] ? formatSignedAmount(players[players.length - 1].net) : 'No data'}
                         />
                         <InsightRow
-                            icon={<Sparkles className="h-4 w-4 text-cyan-300" />}
+                            icon={<Sparkles className="h-4 w-4 text-cyan-300" aria-hidden="true" />}
                             label="Most active"
                             playerName={summary?.mostActivePlayer?.name}
                             value={summary?.mostActivePlayer ? `${summary.mostActivePlayer.gamesPlayed} games` : 'No data'}
                         />
                         <InsightRow
-                            icon={<Crown className="h-4 w-4 text-amber-200" />}
+                            icon={<Crown className="h-4 w-4 text-amber-200" aria-hidden="true" />}
                             label="Biggest swing"
                             value={summary?.biggestSwing ? `${formatSignedAmount(summary.biggestSwing.totalPot)} on ${formatSessionDate(summary.biggestSwing.date)}` : 'No data'}
                         />
