@@ -1,104 +1,101 @@
-import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchData, processData } from '../lib/api';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ArrowLeft, BadgePercent, ChartNoAxesCombined, Trophy } from 'lucide-react';
+import PlayerAvatar from '../components/PlayerAvatar';
+import useAppData from '../hooks/useAppData';
+import { formatSessionDate, formatSignedAmount } from '../lib/format';
 
 export default function Player() {
     const { name } = useParams();
     const decodedName = decodeURIComponent(name);
-    const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { playerMap, loading } = useAppData();
+    const stats = playerMap[decodedName] || null;
 
-    useEffect(() => {
-        fetchData().then(data => {
-            const { players } = processData(data);
-            const player = players.find(p => p.name === decodedName);
-            setPlayers(player);
-            setLoading(false);
-        });
-    }, [decodedName]);
-
-    // Correction: setPlayers should be named setPlayerStats or simply use stats
-    // Re-writing the useEffect slightly to match state
-    function setPlayers(player) {
-        setStats(player);
-    }
-
-    if (loading) return <div className="p-8 text-center text-slate-400">Loading profile...</div>;
+    if (loading) return <div className="glass-panel flex min-h-[50vh] w-full items-center justify-center text-slate-400">Loading profile...</div>;
 
     if (!stats) return (
-        <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-slate-300">Player not found</h2>
-            <Link to="/" className="text-blue-400 hover:underline mt-4 inline-block">Back to Leaderboard</Link>
+        <div className="glass-panel flex w-full flex-col items-center justify-center gap-4 py-16 text-center">
+            <h2 className="font-display text-3xl font-bold text-white">Player not found</h2>
+            <Link to="/" className="app-button-secondary">Back to Leaderboard</Link>
         </div>
     );
 
-    const bestWin = Math.max(...stats.history.map(h => h.net));
-    const worstLoss = Math.min(...stats.history.map(h => h.net));
-
-    // Prepare chart data: Cumulative net over time
-    // history array has { date, net, total }
-    // We want to format date for XAxis
-    const chartData = stats.history.map((h, i) => ({
-        ...h,
-        dateFormatted: format(new Date(h.date), 'MMM d'),
-        gameIndex: i + 1
+    const chartData = stats.history.map((item, index) => ({
+        ...item,
+        label: formatSessionDate(item.date),
+        sequence: index + 1,
     }));
 
-    // Add start point
-    if (chartData.length > 0) {
-        // Optional: Add a zero point at start if needed? 
-        // Or just let it start from first game.
-    }
-
     return (
-        <div className="space-y-8">
-            <Link to="/" className="inline-flex items-center text-slate-400 hover:text-white transition-colors">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+        <div className="flex w-full flex-col gap-4 pb-28 sm:gap-6">
+            <Link to="/players" className="inline-flex items-center text-sm font-semibold text-slate-400 transition-colors hover:text-white">
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Leaderboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold text-white mb-2">{stats.name}</h1>
-                    <div className={`text-2xl font-mono font-bold ${stats.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {stats.net > 0 && '+'}{stats.net} <span className="text-base text-slate-500 font-sans font-normal ml-2">Total Net</span>
+            <section className="hero-panel p-6 sm:p-8">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex items-start gap-4">
+                        <PlayerAvatar name={stats.name} size="lg" />
+                        <div>
+                            <div className="section-kicker">Player Analytics</div>
+                            <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">{stats.name}</h1>
+                            <div className={`mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl ${stats.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                {formatSignedAmount(stats.net)}
+                            </div>
+                            <p className="mt-2 text-sm text-slate-400">Overall rank #{stats.rank} across the current dataset.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                        <AnalyticsChip label="Win rate" value={`${Math.round(stats.winRate)}%`} />
+                        <AnalyticsChip label="Games played" value={stats.gamesPlayed} />
+                        <AnalyticsChip label="Avg session" value={formatSignedAmount(stats.averageNet)} />
                     </div>
                 </div>
-            </header>
+            </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard icon={<Activity className="text-blue-400" />} label="Games Played" value={stats.gamesPlayed} />
-                <StatCard icon={<TrendingUp className="text-green-400" />} label="Best Win" value={bestWin > -Infinity ? `+${bestWin}` : '-'} subValue="Best Session" />
-                <StatCard icon={<TrendingDown className="text-red-400" />} label="Worst Loss" value={worstLoss < Infinity ? worstLoss : '-'} subValue="Worst Session" />
+            <div className="grid gap-4 md:grid-cols-3">
+                <StatCard icon={<BadgePercent className="h-5 w-5 text-emerald-300" />} label="Win Rate" value={`${Math.round(stats.winRate)}%`} subValue={`${stats.wins} winning sessions`} />
+                <StatCard icon={<Trophy className="h-5 w-5 text-amber-200" />} label="Biggest Win" value={formatSignedAmount(stats.bestWin)} subValue="Best single session" />
+                <StatCard icon={<ChartNoAxesCombined className="h-5 w-5 text-cyan-300" />} label="Avg. Session Score" value={formatSignedAmount(stats.averageNet)} subValue="Average net per game" />
             </div>
 
-            <section className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <section className="glass-panel p-5 sm:p-6">
                 <h3 className="text-lg font-semibold text-slate-300 mb-6 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-slate-400" />
+                    <ChartNoAxesCombined className="h-5 w-5 text-slate-400" />
                     Performance History
                 </h3>
-                <div className="h-80 w-full">
+                <div className="h-64 w-full sm:h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData}>
-                            <defs>
-                                <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                            <XAxis dataKey="dateFormatted" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                        <LineChart data={chartData}>
+                            <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                contentStyle={{ backgroundColor: '#020817', borderColor: 'rgba(148,163,184,0.14)', borderRadius: 18 }}
                                 labelStyle={{ color: '#94a3b8' }}
+                                formatter={(value) => formatSignedAmount(value)}
                             />
-                            <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorNet)" />
-                        </AreaChart>
+                            <Line type="monotone" dataKey="total" stroke="#34d399" strokeWidth={3} dot={{ r: 4, fill: '#34d399' }} activeDot={{ r: 6 }} />
+                        </LineChart>
                     </ResponsiveContainer>
+                </div>
+            </section>
+
+            <section className="glass-panel p-5 sm:p-6">
+                <div className="section-kicker">Recent Games</div>
+                <div className="mt-4 space-y-3">
+                    {stats.recentGames.map((game) => (
+                        <div key={game.id} className="flex flex-col gap-2 rounded-[24px] border border-white/8 bg-white/[0.04] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="text-sm font-semibold text-white">{formatSessionDate(game.date)}</div>
+                                <div className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">{game.participantsCount} players · pot {formatSignedAmount(game.totalPot)}</div>
+                            </div>
+                            <div className={`text-2xl font-extrabold ${game.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                {formatSignedAmount(game.net)}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </section>
         </div>
@@ -107,15 +104,24 @@ export default function Player() {
 
 function StatCard({ icon, label, value, subValue }) {
     return (
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 flex items-start gap-4">
-            <div className="p-3 bg-slate-700/50 rounded-lg">
+        <div className="glass-panel flex items-start gap-4 p-6">
+            <div className="rounded-2xl bg-slate-950/60 p-3">
                 {icon}
             </div>
             <div>
                 <div className="text-slate-400 text-sm font-medium">{label}</div>
-                <div className="text-2xl font-bold text-white mt-1">{value}</div>
-                {subValue && <div className="text-xs text-slate-500 mt-1">{subValue}</div>}
+                <div className="mt-1 text-2xl font-bold text-white">{value}</div>
+                {subValue && <div className="mt-1 text-xs text-slate-500">{subValue}</div>}
             </div>
+        </div>
+    );
+}
+
+function AnalyticsChip({ label, value }) {
+    return (
+        <div className="rounded-[22px] border border-white/10 bg-white/[0.06] px-4 py-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</div>
+            <div className="mt-2 font-display text-2xl font-bold text-white">{value}</div>
         </div>
     );
 }
