@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Leaderboard from './pages/Leaderboard';
 import Player from './pages/Player';
 import History from './pages/History';
+import Players from './pages/Players';
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Leaderboard />} />
+          <Route path="/players" element={<Players />} />
           <Route path="/player/:name" element={<Player />} />
           <Route path="/history" element={<History />} />
         </Routes>

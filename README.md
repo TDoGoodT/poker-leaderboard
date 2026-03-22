@@ -1,16 +1,48 @@
-# React + Vite
+# Poker Leaderboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A poker session tracker and leaderboard dashboard. Game history is imported automatically from a WhatsApp group via a bot, or entered manually in-app. Stats are computed client-side and displayed across several views.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Leaderboard** — ranked standings with podium cards, net totals, and win rates
+- **History** — per-session cards showing results, transactions, and raw source messages
+- **Players** — searchable player list with rank, net, and win-rate badges
+- **Player profile** — per-player KPIs, cumulative profit/loss chart, and recent games
+- **New session** — manual entry form with balance validation, saved to browser localStorage
+- **Settings** — clear locally-saved sessions
 
-## React Compiler
+## Data flow
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. The bot (`bot/`) connects to WhatsApp Web, fetches messages from a configured group, parses game results (including Hebrew message variants), and writes structured data to `public/data.json`, then auto-commits and pushes.
+2. The frontend (`src/lib/api.js`) fetches `data.json` at runtime and merges it with any locally-saved sessions stored in `localStorage` under `pokerpal.local-sessions.v1`.
+3. `processData()` in `src/lib/api.js` derives all aggregates (rankings, win rates, biggest swings, recent form). Pages consume this via the `useAppData` hook.
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+This project uses **Bun** as its package manager.
+
+```bash
+bun install          # install dependencies
+bun run dev          # start dev server (http://localhost:5173)
+bun run build        # production build
+bun run preview      # preview production build
+bun run lint         # run ESLint
+bun run bot          # run the WhatsApp import bot
+```
+
+The app is deployed under the `/poker-leaderboard/` subpath (configured in `vite.config.js`).
+
+## Bot setup
+
+The bot uses [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) with `LocalAuth`. On first run it prints a QR code to scan with WhatsApp. Once authenticated, it syncs up to 5000 messages from the configured group and parses any game result messages.
+
+Player name aliases and fuzzy matching are configured in `bot/parser.js`.
+
+## Tech stack
+
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/)
+- [Tailwind CSS v4](https://tailwindcss.com/)
+- [Recharts](https://recharts.org/) for charts
+- [React Router](https://reactrouter.com/) for client-side routing
+- [date-fns](https://date-fns.org/) for date formatting
+- [lucide-react](https://lucide.dev/) for icons
