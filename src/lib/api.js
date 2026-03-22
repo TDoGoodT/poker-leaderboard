@@ -23,6 +23,20 @@ function enrichGame(game) {
     };
 }
 
+function getRangeStartDate(timeRange) {
+    const now = new Date();
+
+    if (timeRange === 'last-year') {
+        return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    }
+
+    if (timeRange === 'last-month') {
+        return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    }
+
+    return null;
+}
+
 export async function fetchData() {
     try {
         const url = `${import.meta.env.BASE_URL}data.json?ts=${Date.now()}`;
@@ -38,7 +52,8 @@ export async function fetchData() {
     }
 }
 
-export function processData(data) {
+export function processData(data, options = {}) {
+    const { timeRange = 'all-time' } = options;
     const playerStats = {};
     const playerNames = Array.from(new Set(data.players || [])).sort((left, right) => left.localeCompare(right));
 
@@ -58,8 +73,17 @@ export function processData(data) {
         };
     });
 
+    const startDate = getRangeStartDate(timeRange);
+
     const chronologicalGames = [...(data.games || [])]
         .map(enrichGame)
+        .filter((game) => {
+            if (!startDate) {
+                return true;
+            }
+
+            return new Date(game.date) >= startDate;
+        })
         .sort((left, right) => new Date(left.date) - new Date(right.date));
 
     chronologicalGames.forEach((game) => {

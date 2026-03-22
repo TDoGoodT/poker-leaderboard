@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fetchData, processData } from '../lib/api';
 
 const initialState = {
@@ -8,8 +8,9 @@ const initialState = {
     summary: null,
 };
 
-export default function useAppData() {
-    const [state, setState] = useState(initialState);
+export default function useAppData(options = {}) {
+    const { timeRange = 'all-time' } = options;
+    const [rawData, setRawData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -19,7 +20,7 @@ export default function useAppData() {
 
         try {
             const data = await fetchData();
-            setState(processData(data));
+            setRawData(data);
         } catch (loadError) {
             setError(loadError);
         } finally {
@@ -30,6 +31,14 @@ export default function useAppData() {
     useEffect(() => {
         reload();
     }, []);
+
+    const state = useMemo(() => {
+        if (!rawData) {
+            return initialState;
+        }
+
+        return processData(rawData, { timeRange });
+    }, [rawData, timeRange]);
 
     return {
         ...state,

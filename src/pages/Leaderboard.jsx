@@ -1,4 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useState } from 'react';
 import { Crown, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LeaderboardTable from '../components/LeaderboardTable';
@@ -8,7 +9,14 @@ import useAppData from '../hooks/useAppData';
 import { formatSessionDate, formatSignedAmount } from '../lib/format';
 
 export default function Leaderboard() {
-    const { players, summary, loading } = useAppData();
+    const [timeRange, setTimeRange] = useState('all-time');
+    const { players, summary, loading } = useAppData({ timeRange });
+
+    const timeRanges = [
+        { value: 'all-time', label: 'All Time' },
+        { value: 'last-year', label: 'Last Year' },
+        { value: 'last-month', label: 'Last Month' },
+    ];
 
     if (loading) {
         return <LeaderboardSkeleton />;
@@ -24,6 +32,18 @@ export default function Leaderboard() {
                     <div>
                         <div className="section-kicker">Leaderboard</div>
                         <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Session Pulse</h1>
+                        <div className="mt-4 inline-flex rounded-full border border-white/10 bg-slate-950/55 p-1">
+                            {timeRanges.map((range) => (
+                                <button
+                                    key={range.value}
+                                    type="button"
+                                    onClick={() => setTimeRange(range.value)}
+                                    className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-[0.08em] transition-colors sm:px-4 sm:text-sm ${timeRange === range.value ? 'bg-emerald-300 text-slate-950' : 'text-slate-300 hover:text-white'}`}
+                                >
+                                    {range.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4 lg:min-w-[560px]">
