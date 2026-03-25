@@ -93,7 +93,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
                         )}
 
                         {/* Content */}
-                        <div ref={firstFocusableRef} tabIndex={-1} className="px-5 pt-4 outline-none">
+                        <div ref={firstFocusableRef} tabIndex={-1} className="px-5 pt-4 outline-none overflow-y-auto max-h-[80vh]">
                             {children}
                         </div>
                     </motion.div>

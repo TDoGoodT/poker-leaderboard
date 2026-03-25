@@ -2,6 +2,7 @@ import { lazy, Suspense, useLayoutEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './components/Layout';
+import DialogContainer from './components/DialogContainer';
 import {
     LeaderboardSkeleton,
     HistorySkeleton,
@@ -106,6 +107,7 @@ function App() {
             <Layout>
                 <AnimatedRoutes />
             </Layout>
+            <DialogContainer />
         </Router>
     );
 }

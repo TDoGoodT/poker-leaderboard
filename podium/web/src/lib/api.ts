@@ -32,6 +32,8 @@ export type PlayerStats = {
 export type GameEntry = {
   player: string;
   net: number;
+  buyIn?: number;
+  cashOut?: number;
 };
 
 export type GameTransaction = {
@@ -46,6 +48,7 @@ export type ApiGame = {
   date: string;
   rawMessage: string;
   results: Record<string, number>;
+  entries?: GameEntry[];
   transactions: GameTransaction[];
   sender?: string;
 };
@@ -87,8 +90,37 @@ export type ProcessedDataset = {
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '');
 
 function enrichGame(game: ApiGame): ProcessedGame {
-  const entries = Object.entries(game.results || {})
-    .map(([player, net]) => ({ player, net: Number(net || 0) }))
+  let rawEntries: GameEntry[] | null = game.entries ?? null;
+  if (!rawEntries && game.rawMessage) {
+    try {
+      const parsed = JSON.parse(game.rawMessage);
+      if (parsed && Array.isArray(parsed.entries)) {
+        rawEntries = parsed.entries;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const rawEntriesByPlayer = new Map((rawEntries ?? []).map((entry) => [entry.player, entry]));
+  const players = Array.from(new Set([
+    ...Object.keys(game.results || {}),
+    ...rawEntriesByPlayer.keys(),
+  ]));
+
+  const entries = players
+    .map((player) => {
+      const rawEntry = rawEntriesByPlayer.get(player);
+      const netFromResults = game.results?.[player];
+      const fallbackNet = rawEntry ? Number(rawEntry.cashOut || 0) - Number(rawEntry.buyIn || 0) : 0;
+
+      return {
+        player,
+        net: Number(netFromResults ?? fallbackNet),
+        buyIn: rawEntry?.buyIn,
+        cashOut: rawEntry?.cashOut,
+      };
+    })
     .sort((left, right) => right.net - left.net);
 
   const positiveEntries = entries.filter((entry) => entry.net > 0);
@@ -135,16 +167,36 @@ export async function fetchData(): Promise<ApiDataset> {
   return (await response.json()) as ApiDataset;
 }
 
+export async function login(password: string) {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    throw new Error(data?.error ?? 'Login failed');
+  }
+  return data.token;
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('adminToken');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 export async function createGame(payload: {
   date?: string;
   rawMessage?: string;
   sender?: string;
+  entries?: Array<Pick<GameEntry, 'player' | 'buyIn' | 'cashOut'>>;
   transactions: GameTransaction[];
 }) {
   const response = await fetch(`${API_BASE}/games`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
     body: JSON.stringify(payload),
   });
@@ -152,6 +204,46 @@ export async function createGame(payload: {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body?.error ?? 'Could not create game');
+  }
+
+  return response.json();
+}
+
+export async function updateGame(id: string, payload: {
+  date?: string;
+  rawMessage?: string;
+  sender?: string;
+  entries?: Array<Pick<GameEntry, 'player' | 'buyIn' | 'cashOut'>>;
+  transactions: GameTransaction[];
+}) {
+  const response = await fetch(`${API_BASE}/games/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body?.error ?? 'Could not update game');
+  }
+
+  return response.json();
+}
+
+export async function deleteGame(id: string) {
+  const response = await fetch(`${API_BASE}/games/${id}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders()
+    }
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body?.error ?? 'Could not delete game');
   }
 
   return response.json();

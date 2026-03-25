@@ -5,11 +5,18 @@ export type GameTransaction = {
   raw?: string;
 };
 
+export type GameEntry = {
+  player: string;
+  buyIn: number;
+  cashOut: number;
+};
+
 export type GameRecord = {
   id: string;
   date: string;
   rawMessage: string;
   sender: string;
+  entries?: GameEntry[];
   transactions: GameTransaction[];
   results: Record<string, number>;
 };
@@ -23,5 +30,6 @@ export type CreateGameInput = {
   date: string;
   rawMessage: string;
   sender: string;
+  entries?: GameEntry[];
   transactions: GameTransaction[];
 };
