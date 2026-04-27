@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 export function formatSignedAmount(value) {
     const amount = Number(value || 0);
     const formatter = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0,
+        maximumFractionDigits: 2,
     });
 
     if (amount > 0) {

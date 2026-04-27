@@ -15,6 +15,8 @@ const PLAYERS = {
     'דניאלי': ['דניאלי'],
     'טיטו': ['טיטו'],
     'ירדן': ['ירדן'],
+    'עדיני': ['עדיני'],
+    'בכר': ['בכר'],
     'בן ארצי': ['בן ארצי', 'בנארצ', 'בנארצי', 'בן-ארצי'] // Added hyphen just in case
 };
 
@@ -26,13 +28,16 @@ Object.entries(PLAYERS).forEach(([name, aliases]) => {
     });
 });
 
+const BIDI_MARKS_REGEX = /[\u200e\u200f\u202a-\u202e]/g;
+const AMOUNT_PATTERN = '(\\d+(?:\\.\\d+)?)';
+
 /**
  * Normalizes a name string to a known player.
  * Checks exact match, then 'to' prefix (ל), then fuzzy match.
  */
 function normalizePlayerName(rawName) {
     if (!rawName) return null;
-    let name = rawName.trim();
+    let name = rawName.replace(BIDI_MARKS_REGEX, '').trim();
 
     // Check 1: Exact alias match
     if (ALIAS_MAP[name]) return ALIAS_MAP[name];
@@ -82,7 +87,7 @@ function normalizePlayerName(rawName) {
 function parseMessage(text) {
     if (!text) return null;
 
-    const lines = text.split('\n');
+    const lines = text.replace(BIDI_MARKS_REGEX, '').split('\n');
     const transactions = [];
     const results = {};
 
@@ -90,17 +95,17 @@ function parseMessage(text) {
     const patterns = [
         // 1. Name transfers to Name Amount: "שמאי מעביר לדניאלי 110"
         {
-            regex: /^(.+?)\s+מעביר\s+(?:ל)?(.+?)\s+(\d+)$/,
+            regex: new RegExp(`^(.+?)\\s+מעביר\\s+(?:ל)?(.+?)\\s+${AMOUNT_PATTERN}$`),
             map: { payer: 1, receiver: 2, amount: 3 }
         },
         // 2. Name transfers Amount to Name: "בן ארצי מעביר 40 למסיקה"
         {
-            regex: /^(.+?)\s+מעביר\s+(\d+)\s+(?:ל)?(.+)$/,
+            regex: new RegExp(`^(.+?)\\s+מעביר\\s+${AMOUNT_PATTERN}\\s+(?:ל)?(.+)$`),
             map: { payer: 1, amount: 2, receiver: 3 }
         },
         // 3. Name Amount to Name (Generic): "סבוראי 200 לבוסקילה"
         {
-            regex: /^(.+?)\s+(\d+)\s+(?:ל)?(.+)$/,
+            regex: new RegExp(`^(.+?)\\s+${AMOUNT_PATTERN}\\s+(?:ל)?(.+)$`),
             map: { payer: 1, amount: 2, receiver: 3 }
         }
     ];
@@ -116,7 +121,7 @@ function parseMessage(text) {
             if (match) {
                 const rawPayer = match[map.payer];
                 const rawReceiver = match[map.receiver];
-                const amount = parseInt(match[map.amount], 10);
+                const amount = parseFloat(match[map.amount]);
 
                 const payer = normalizePlayerName(rawPayer);
                 const receiver = normalizePlayerName(rawReceiver);
